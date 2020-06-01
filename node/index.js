@@ -17,16 +17,6 @@ const fetchPage = async(url) => {
     }
 }
 
-const fetchPage2 = async(url) => {
-
-    return axios({
-        'url': url,
-        method: 'get',
-        timeout: 10000,
-    }).then(res => res.data).catch(err => console.log(err))
-
-}
-
 const getTitleUrl = async(title) => {
 
     const finalUrl = baseURL + '?post_type=manga&s=' + title
@@ -40,14 +30,20 @@ const getTitleUrl = async(title) => {
 
     const titleUrlList = await $('.daftar .bge').map(async(i, elem) => {
         console.log('log : ', elem.children[1].attribs.href)
-        console.log('logzzz : ', elem.children[1].children[3].children[1])
+        const mangaTitle = elem.children[1].children[3].children[1].children[0].data.replace(/[\n|\t]+/g, '')
 
         const value = await getChapter(elem.children[1].attribs.href)
 
         value.splice(0, 1)
         console.log('value : ', value)
 
-        jsonToFile(value, 'solution-' + elem.children[1].attribs.href.replace('//', '') + '.json')
+        Promise.map(value, (data) => {
+            const downloadPage = baseURL + data;
+
+            getDownloadUrl(downloadPage)
+        })
+
+        // jsonToFile(value, 'solution-' + mangaTitle + '.json')
 
 
         return value
@@ -59,7 +55,7 @@ const getTitleUrl = async(title) => {
 const toJsonObject = async(result) => {
 
     const data = await Promise.all(result)
-    console.log('datasss : ', data)
+        // console.log('datasss : ', data)
 
     return data
 }
@@ -91,6 +87,21 @@ const jsonToFile = async(result, filename) => {
     }
 }
 
+const getDownloadUrl = async(url) => {
+
+    console.log('download page : ', url)
+    const html = await fetchPage(url)
+
+    const $ = cheerio.load(html)
+
+    // console.log('$ html ', html)
+    const data = await $('.news .preview iframe').get(0).attribs.src
+    console.log('data sss : ', data)
+        // await $('.news .preview').map((i, elem) => {
+        //     console.log('llllll : ', elem.children[3].attribs.src)
+        // })
+}
+
 const getChapter = async(url) => {
     console.log('processed title url : ', url)
 
@@ -114,7 +125,7 @@ const getChapter = async(url) => {
 
     }).get()
 
-    return chapter
+    return Promise.all(chapter)
 
 
 }
